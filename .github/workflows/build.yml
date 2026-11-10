@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required if pushing changes back to the repository
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -30,17 +30,25 @@ jobs:
           mkdir -p artifacts/a55x-A556BXXSBCYK2
           cp build/a55x-A556BXXSBCYK2/* artifacts/a55x-A556BXXSBCYK2/
 
-      - name: Upload build artifacts (GitHub UI download)
+      - name: Calculate payload size and update targets-v3.json
+        run: |
+          PAYLOAD_SIZE=$(stat -c%s "artifacts/a55x-A556BXXSBCYK2/cve-2026-43499-app.so")
+          echo "Calculated payload size: $PAYLOAD_SIZE bytes"
+          
+          jq --argjson size "$PAYLOAD_SIZE" \
+            '(.[] | select(.payloadId == "a55x-A556BXXSBCYK2").exploit.size) = $size' \
+            support/targets-v3.json > support/targets-v3.json.tmp && mv support/targets-v3.json.tmp support/targets-v3.json
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: a55x-A556BXXSBCYK2-payloads
           path: artifacts/
 
-      - name: Commit and push artifacts back to repository
+      - name: Commit and push changes back to repository
         if: github.event_name == 'push'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add artifacts/
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update build artifacts for a55x-A556BXXSBCYK2" && git push)
-          
+          git add artifacts/ support/targets-v3.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update build artifacts and payload size for a55x-A556BXXSBCYK2" && git push)
