@@ -36,7 +36,7 @@ jobs:
           echo "Calculated payload size: $PAYLOAD_SIZE bytes"
           
           jq --argjson size "$PAYLOAD_SIZE" \
-            '(.[] | select(.payloadId == "a55x-A556BXXSBCYK2").exploit.size) = $size' \
+            '(.payloads[] | select(.payloadId == "a55x-A556BXXSBCYK2").exploit.size) = $size' \
             support/targets-v3.json > support/targets-v3.json.tmp && mv support/targets-v3.json.tmp support/targets-v3.json
 
       - name: Upload build artifacts
