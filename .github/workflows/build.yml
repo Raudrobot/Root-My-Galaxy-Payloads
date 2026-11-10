@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required if pushing changes back to the repository
 
     steps:
       - name: Checkout repository
@@ -22,3 +24,23 @@ jobs:
       - name: Run make command
         run: |
           make TARGET=a55x-A556BXXSBCYK2 ANDROID_NDK_HOME="$ANDROID_NDK_HOME"
+
+      - name: Copy files to artifacts directory
+        run: |
+          mkdir -p artifacts/a55x-A556BXXSBCYK2
+          cp build/a55x-A556BXXSBCYK2/* artifacts/a55x-A556BXXSBCYK2/
+
+      - name: Upload build artifacts (GitHub UI download)
+        uses: actions/upload-artifact@v4
+        with:
+          name: a55x-A556BXXSBCYK2-payloads
+          path: artifacts/
+
+      - name: Commit and push artifacts back to repository
+        if: github.event_name == 'push'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add artifacts/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update build artifacts for a55x-A556BXXSBCYK2" && git push)
+          
