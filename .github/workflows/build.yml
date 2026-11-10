@@ -1,0 +1,25 @@
+name: Build Target
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r25c # Change to the specific NDK version required by your project
+
+      - name: Run make command
+        run: |
+          make TARGET=a55x-A556BXXSBCYK2 ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
