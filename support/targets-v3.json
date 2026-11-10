@@ -187,7 +187,7 @@
       "displayName": "Galaxy A55 5G | Kernel 6.1.138",
       "models": ["SM-A556B"],
       "kernelVersions": ["6.1.138"],
-      "requiresFreshP0Session": true,
+      "requiresFreshP0Session": false,
       "exploit": {
         "url": "https://raw.githubusercontent.com/Raudrobot/Root-My-Galaxy-Payloads/main/artifacts/a55x-A556BXXSBCYK2/cve-2026-43499-app.so",
         "size": 104128
