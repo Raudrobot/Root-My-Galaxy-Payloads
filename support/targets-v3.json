@@ -226,7 +226,7 @@
       "requiresFreshP0Session": false,
       "exploit": {
         "url": "https://raw.githubusercontent.com/Raudrobot/Root-My-Galaxy-Payloads/main/artifacts/a55x-A556BXXSBCYK2/cve-2026-43499-app.so",
-        "size": 140208
+        "size": 140224
       },
       "kernelsu": {
         "url": "https://raw.githubusercontent.com/Raudrobot/Root-My-Galaxy-Payloads/main/kernelsu/ksud-A556BXXSBCYK2-kdp",
