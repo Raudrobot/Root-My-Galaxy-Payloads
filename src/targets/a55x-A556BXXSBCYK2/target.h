@@ -5,16 +5,6 @@
 #define BUILD_VARIANT_LABEL \
   "a55x-A556BXXSBCYK2-app-production-slide8-fops8"
 
-#ifndef ready_ok
-#define ready_ok 0
-#define ready_elapsed_usec 0
-#define ready_wchan 0
-#define guard_ok 0
-#define guard_elapsed_usec 0
-#define guard_wchan 0
-#define pselect_age_usec 0
-#endif
-
 #define APP_DEFAULT_FAST_KSNITCH 1
 #define APP_PHYS_P0_ORACLE 1
 #define APP_REQUIRE_FRESH_P0_SESSION 1
