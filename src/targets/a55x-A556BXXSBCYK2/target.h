@@ -15,9 +15,6 @@
 #define pselect_age_usec 0
 #endif
 
-#ifndef OFFSET_H
-#define OFFSET_H
-
 #define APP_DEFAULT_FAST_KSNITCH 1
 #define APP_PHYS_P0_ORACLE 1
 #define APP_REQUIRE_FRESH_P0_SESSION 1
