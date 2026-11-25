@@ -365,7 +365,9 @@ int try_cfi_stage(void) {
     fops_before = pre_fops;
     cfi_last_step = 4;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 
   if (!audit_fake_fops_table(fd)) {
