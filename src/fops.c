@@ -49,7 +49,9 @@ static int audit_fake_fops_table(int fd) {
   if (rd != (ssize_t)sizeof(table)) {
     pr_warning("cfi fake fops read failed ret=%zd start=%016zx size=%zu errno=%d\n",
                rd, fake_fops, sizeof(table), errno);
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     return 0;
+  #endif
   }
   struct expected_slot {
     size_t off;
