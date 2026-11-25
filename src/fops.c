@@ -1,5 +1,4 @@
 #include "common.h"
-
 #if !defined(APP_PHYS_P0_ORACLE) || !APP_PHYS_P0_ORACLE
 #if defined(APP_PAYLOAD) && APP_PAYLOAD
 #define PSELECT_CFI_ROUTE_ATTEMPTS 4
