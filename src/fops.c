@@ -645,8 +645,6 @@ fail:
     fake_fops_owner_is_zero(fd);
   }
   SYSCHK(close(fd));
-#ifndef APP_FORCED_SLIDE_P0_OFFSET
   return 0;
 #endif
 }
-#endif
